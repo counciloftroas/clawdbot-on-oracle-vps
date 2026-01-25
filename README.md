@@ -15,4 +15,4 @@ All resources stay within Oracle's Always Free tier limits.
 
 ## Guide
 
-The [blog post](abrown.blog/posts/personal-assistant-clawdbot-on-oracle-cloud) has a full write up on everything you need to do.
+The [blog post](https://abrown.blog/posts/personal-assistant-clawdbot-on-oracle-cloud) has a full write up on everything you need to do.
