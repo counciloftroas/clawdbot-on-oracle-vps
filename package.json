@@ -1,0 +1,30 @@
+{
+  "name": "clawdbot-oracle-vps",
+  "version": "1.0.0",
+  "description": "Oracle Cloud Always Free tier Ampere A1 ARM instance deployment",
+  "main": "bin/index.js",
+  "scripts": {
+    "build": "tsc",
+    "preview": "pulumi preview",
+    "up:local": "dotenv -- sh -c 'pulumi up --stack \"$PULUMI_ORG/$PULUMI_PROJECT/$PULUMI_STACK\"'",
+    "destroy": "dotenv -- sh -c 'pulumi destroy --stack \"$PULUMI_ORG/$PULUMI_PROJECT/$PULUMI_STACK\" --yes'"
+  },
+  "keywords": [
+    "pulumi",
+    "oracle",
+    "oci",
+    "infrastructure"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@pulumi/oci": "^3.14.0",
+    "@pulumi/pulumi": "^3.216.0",
+    "dotenv": "^17.2.3"
+  },
+  "devDependencies": {
+    "@types/node": "^25.0.9",
+    "dotenv-cli": "^11.0.0",
+    "typescript": "^5.9.3"
+  }
+}

@@ -1,0 +1,36 @@
+# Dependencies
+node_modules/
+
+# Build output
+bin/
+
+# Pulumi
+.pulumi/
+
+# Private keys and secrets
+*.pem
+*.key
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Pulumi stack configs with real values (keep example only)
+Pulumi.*.yaml
+!Pulumi.yaml
+!Pulumi.example.yaml
+
+# IDE
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+keys

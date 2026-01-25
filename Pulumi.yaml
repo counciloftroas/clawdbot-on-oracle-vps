@@ -1,0 +1,6 @@
+name: clawdbot-oracle-vps
+runtime:
+  name: nodejs
+  options:
+    typescript: true
+description: Oracle Cloud Always Free tier Ampere A1 ARM instance deployment
