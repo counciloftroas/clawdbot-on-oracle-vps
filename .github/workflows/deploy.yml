@@ -1,8 +1,7 @@
 name: Pulumi Deploy
 
 on:
-  workflow_dispatch: # Manual trigger only - using retry-capacity.yml cron instead
-
+  workflow_dispatch: # Manual trigger only
 env:
   PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
   OCI_TENANCY_OCID: ${{ secrets.OCI_TENANCY_OCID }}
