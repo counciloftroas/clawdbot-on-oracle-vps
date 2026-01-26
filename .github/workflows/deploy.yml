@@ -8,7 +8,7 @@ env:
   OCI_USER_OCID: ${{ secrets.OCI_USER_OCID }}
   OCI_FINGERPRINT: ${{ secrets.OCI_FINGERPRINT }}
   OCI_PRIVATE_KEY: ${{ secrets.OCI_PRIVATE_KEY }}
-      OCI_PRIVATE_KEY_FILE: /home/runner/.oci/oci_api_key.pem
+  OCI_PRIVATE_KEY_FILE: /home/runner/.oci/oci_api_key.pem  
   OCI_COMPARTMENT_ID: ${{ secrets.OCI_COMPARTMENT_ID }}
   OCI_REGION: ${{ vars.OCI_REGION }}
   SSH_PUBLIC_KEY: ${{ secrets.SSH_PUBLIC_KEY }}
