@@ -1,0 +1,119 @@
+name: no-claude-coauthor
+
+on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - edited
+
+permissions:
+  contents: read
+
+jobs:
+  no-claude-coauthor:
+    name: no-claude-coauthor
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Reject Claude and Anthropic attribution
+        shell: bash
+        env:
+          PR_BODY: ${{ github.event.pull_request.body }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          set -euo pipefail
+          export LC_ALL=C
+
+          is_forbidden_line() {
+            local line="$1"
+            line="${line//$'\r'/}"
+            if printf '%s\n' "$line" | grep -qiE '^[[:space:]]*co-authored-by:.*(claude|anthropic)'; then
+              return 0
+            fi
+            if printf '%s\n' "$line" | grep -qiE 'generated[[:space:]]+with[[:space:]]+(\[[[:space:]]*claude[[:space:]]+code[[:space:]]*\]|claude[[:space:]]+code($|[^[:alnum:]_]))'; then
+              return 0
+            fi
+            return 1
+          }
+
+          collect_matches() {
+            local text="$1"
+            local line lineno=0
+            MATCHES=""
+            while IFS= read -r line || [[ -n "$line" ]]; do
+              lineno=$((lineno + 1))
+              if is_forbidden_line "$line"; then
+                MATCHES+="$(printf '    line %d: %s\n' "$lineno" "$line")"$'\n'
+              fi
+            done <<< "$text"
+          }
+
+          ensure_commit() {
+            git cat-file -e "$1^{commit}" 2>/dev/null
+          }
+
+          if ! ensure_commit "$HEAD_SHA"; then
+            git fetch --no-tags origin "pull/${PR_NUMBER}/head"
+          fi
+          if ! ensure_commit "$BASE_SHA"; then
+            git fetch --no-tags origin "refs/heads/${BASE_REF}:refs/remotes/origin/${BASE_REF}"
+          fi
+          if ! ensure_commit "$BASE_SHA" || ! ensure_commit "$HEAD_SHA"; then
+            printf 'Could not resolve the pull request range %s..%s\n' "$BASE_SHA" "$HEAD_SHA" >&2
+            exit 1
+          fi
+
+          fail=0
+          commit_fail=0
+          body_fail=0
+          report=""
+
+          while IFS= read -r sha; do
+            [[ -z "$sha" ]] && continue
+            msg="$(git log -1 --format=%B "$sha")"
+            collect_matches "$msg"
+            if [[ -n "$MATCHES" ]]; then
+              fail=1
+              commit_fail=1
+              subject="$(git log -1 --format=%s "$sha")"
+              short="$(git rev-parse --short "$sha")"
+              report+="$(printf 'Commit %s (%s):\n%s\n' "$short" "$subject" "$MATCHES")"$'\n'
+            fi
+          done <<< "$(git rev-list "${BASE_SHA}..${HEAD_SHA}")"
+
+          collect_matches "${PR_BODY-}"
+          if [[ -n "$MATCHES" ]]; then
+            fail=1
+            body_fail=1
+            report+="$(printf 'Pull request description:\n%s\n' "$MATCHES")"$'\n'
+          fi
+
+          if [[ "$fail" -eq 0 ]]; then
+            printf 'No Claude or Anthropic attribution lines found in %s..%s or the pull request description.\n' \
+              "$BASE_SHA" "$HEAD_SHA"
+            exit 0
+          fi
+
+          printf '%s\n\n' 'Claude or Anthropic attribution is not allowed in this pull request.'
+          printf '%s' "$report"
+          printf '\n%s\n' 'How to fix:'
+          if [[ "$commit_fail" -eq 1 ]]; then
+            printf '%s\n' '  Reword each listed commit and delete the matching lines, then force-push:'
+            printf '    git rebase -i %s\n' "$BASE_SHA"
+            printf '%s\n' '    # mark each listed commit as reword, remove the attribution lines, and save'
+            printf '%s\n' '    git push --force-with-lease'
+          fi
+          if [[ "$body_fail" -eq 1 ]]; then
+            printf '%s\n' '  Edit the pull request description and remove the matching lines.'
+          fi
+          printf '%s\n' '  This check runs again when you push or edit the pull request.'
+          exit 1
